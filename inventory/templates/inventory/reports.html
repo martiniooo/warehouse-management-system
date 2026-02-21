@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Raporty magazynowe</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container { max-width: 700px; margin: auto; }
+
+        h1 { margin-bottom: 25px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .report-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+
+        .report-item:hover { background-color: #e9ecef; }
+
+        .report-info { font-size: 15px; }
+
+        .report-info span {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            background-color: var(--accent);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn:hover { background-color: var(--accent-hover); }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <h1>📊 Raporty magazynowe</h1>
+
+    <div class="card">
+
+        <!-- Stan magazynu -->
+        <div class="report-item">
+            <div class="report-info">
+                📦 Raport stanu magazynu
+                <span>Produkt + lokalizacja, ilości i zajęta objętość</span>
+            </div>
+
+            <div class="btn-group">
+                <a class="btn" href="{% url 'report_stock' %}">CSV</a>
+                <a class="btn" href="{% url 'report_stock_pdf' %}">PDF</a>
+            </div>
+        </div>
+
+        <!-- Historia operacji -->
+        <div class="report-item">
+            <div class="report-info">
+                🔄 Raport historii operacji
+                <span>Przyjęcia, wydania i przesunięcia produktów</span>
+            </div>
+
+            <div class="btn-group">
+                <a class="btn" href="{% url 'report_operations' %}">CSV</a>
+                <a class="btn" href="{% url 'report_operations_pdf' %}">PDF</a>
+            </div>
+        </div>
+
+        <!-- Stan magazynów (lokalizacji) -->
+        <div class="report-item">
+            <div class="report-info">
+                🏬 Stan magazynów (lokalizacji)
+                <span>Pojemność, zajęte, wolne i % wykorzystania</span>
+            </div>
+
+            <div class="btn-group">
+                <a class="btn" href="{% url 'report_locations_pdf' %}">PDF</a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

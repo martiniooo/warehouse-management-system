@@ -1,0 +1,33 @@
+<div class="back-home-wrapper">
+    <a href="{% url 'home' %}" class="back-home-btn">
+        ⬅ Powrót do strony głównej
+    </a>
+</div>
+
+<style>
+    .back-home-wrapper {
+        margin-bottom: 25px;
+    }
+
+    .back-home-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background-color: #ffffff;
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 12px;
+        border: 1px solid #d0d7de;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+        transition: all 0.2s ease;
+    }
+
+    .back-home-btn:hover {
+        background-color: #0d6efd;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(13,110,253,0.25);
+    }
+</style>

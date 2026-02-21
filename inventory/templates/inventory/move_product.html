@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Przesunięcie produktu</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container { max-width: 600px; margin: auto; }
+        h1 { margin-bottom: 25px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f3f5f7;
+            color: #2e2e2e;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover { background-color: var(--accent-hover); }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <h1>🔁 Przesunięcie produktu</h1>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Produkt (źródło)</label>
+                <select name="product" id="productSelect" required>
+                    {% for product in products %}
+                        <option value="{{ product.id }}"
+                                data-qty="{{ product.quantity }}"
+                                data-location="{{ product.location.name }}">
+                            {{ product.name }} — {{ product.quantity }} szt. ({{ product.location.name }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="hint">Wybierasz konkretną partię produktu w danej lokalizacji</div>
+            </div>
+
+            <div class="form-group">
+                <label>Lokalizacja docelowa</label>
+                <select name="target_location" required>
+                    {% for location in locations %}
+                        <option value="{{ location.id }}">
+                            {{ location.name }} (wolne: {{ location.free_capacity|floatformat:2 }} m³)
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="hint">Wybierz magazyn docelowy z wystarczającą wolną przestrzenią</div>
+            </div>
+
+            <div class="form-group">
+                <label>Ilość do przesunięcia</label>
+                <input type="number" name="quantity" id="qtyInput" min="1" required>
+            </div>
+
+            <div class="info" id="afterMoveInfo">
+                Po przesunięciu w lokalizacji źródłowej zostanie: <b><span id="afterMove">—</span></b> szt.
+            </div>
+
+            <button type="submit">Przesuń produkt</button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    const productSelect = document.getElementById('productSelect');
+    const qtyInput = document.getElementById('qtyInput');
+    const afterMove = document.getElementById('afterMove');
+
+    function updateAfterMove() {
+        const selected = productSelect.options[productSelect.selectedIndex];
+        const total = parseInt(selected.dataset.qty || '0', 10);
+        const qty = parseInt(qtyInput.value || '0', 10);
+
+        const remaining = total - qty;
+        afterMove.textContent = isNaN(remaining) ? '—' : remaining;
+    }
+
+    productSelect.addEventListener('change', updateAfterMove);
+    qtyInput.addEventListener('input', updateAfterMove);
+
+    updateAfterMove();
+</script>
+
+</body>
+</html>

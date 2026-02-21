@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Przyjęcie towaru</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --primary: #0d6efd;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* ===== KARTA ===== */
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        /* ===== FORMULARZ ===== */
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--primary);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <h1>📥 Przyjęcie towaru (optymalizacja)</h1>
+
+    <div class="card">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="productSelect">Produkt</label>
+            <select name="product_name" id="productSelect" required>
+                {% for product in products %}
+                    <option value="{{ product.name }}" data-total="{{ product.total_quantity }}">
+                        {{ product.name }} (łącznie: {{ product.total_quantity }} szt.)
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="hint">Lista produktów jest agregowana ze wszystkich lokalizacji</div>
+
+            <label for="quantity">Ilość (szt.)</label>
+            <input type="number" name="quantity" id="quantity" min="1" required>
+
+            <label for="locationSelect">Sugerowana lokalizacja</label>
+            <select name="location_id" id="locationSelect" required>
+                {% for location in locations %}
+                    <option value="{{ location.id }}">
+                        {{ location.name }} (wolne: {{ location.free_capacity|floatformat:2 }} m³)
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="hint">Wybierz lokalizację z wystarczającą wolną przestrzenią</div>
+
+            <button type="submit">Zatwierdź przyjęcie</button>
+
+        </form>
+
+    </div>
+</div>
+
+</body>
+</html>

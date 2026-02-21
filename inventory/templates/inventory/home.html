@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>System magazynowy</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --danger: #dc3545;
+            --danger-hover: #bb2d3b;
+            --border: rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1400px; /* było 1100px */
+            margin: auto;
+        }
+
+        /* ===== TOP BAR ===== */
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .title h1 {
+            margin: 0 0 6px 0;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .userbox {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            min-width: 220px;
+        }
+
+        .user-pill {
+            background: #ffffffcc;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            border-radius: 14px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+            text-align: right;
+        }
+
+        .user-pill b {
+            display: block;
+            font-size: 14px;
+        }
+
+        .user-pill span {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-danger:hover { background: var(--danger-hover); }
+
+        /* ===== MESSAGES ===== */
+
+        .msg {
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin: 0 0 14px 0;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            background: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .msg-success { border-left: 6px solid #198754; }
+        .msg-error { border-left: 6px solid #dc3545; }
+
+        /* ===== GRID ===== */
+        /* ✅ pełna szerokość + responsywne kolumny */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.03);
+            text-decoration: none;
+            color: inherit;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.10);
+        }
+
+        .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .card h3 {
+            margin: 0 0 8px 0;
+        }
+
+        .card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.35;
+        }
+
+        .tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 11px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #f1f3f5;
+            color: #333;
+            border: 1px solid var(--border);
+            font-weight: 700;
+        }
+
+        /* ===== LOCKED (brak uprawnień) ===== */
+        .locked {
+            opacity: 0.60;
+            pointer-events: none;
+            filter: grayscale(0.15);
+        }
+
+        .locked .tag {
+            background: #fff3cd;
+            border-color: rgba(255,193,7,0.35);
+            color: #856404;
+        }
+
+        /* ===== BUG WIDGET (floating) ===== */
+        .bug-fab {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.14);
+            cursor: pointer;
+            font-size: 22px;
+            z-index: 1000;
+        }
+
+        .bug-panel {
+            position: fixed;
+            right: 22px;
+            bottom: 90px;
+            width: 340px;
+            max-width: calc(100vw - 44px);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+            padding: 14px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .bug-panel.open { display: block; }
+
+        .bug-panel .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .bug-panel h2 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .bug-close {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 6px 8px;
+            border-radius: 10px;
+        }
+
+        .bug-panel label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .bug-panel input,
+        .bug-panel textarea {
+            width: 100%;
+            padding: 9px 10px;
+            margin-top: 6px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .bug-panel textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        .bug-panel .hint {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .bug-panel .actions {
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* mobile polish */
+        @media (max-width: 520px) {
+            body { padding: 18px; }
+            .topbar { flex-direction: column; align-items: stretch; }
+            .userbox { align-items: flex-start; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="topbar">
+        <div class="title">
+            <h1>📦 Aplikacja magazynowa</h1>
+            <p class="subtitle">
+                System zarządzania magazynem z monitorowaniem zapasów i optymalizacją przestrzeni
+            </p>
+        </div>
+
+        <div class="userbox">
+            <div class="user-pill">
+                <b>👤 {{ request.user.username }}</b>
+                <span>
+                    Rola:
+                    {% if role == 'OWNER' %}Właściciel{% endif %}
+                    {% if role == 'WORKER' %}Magazynier{% endif %}
+                    {% if role == 'VIEWER' %}Podgląd{% endif %}
+                </span>
+            </div>
+
+            <!-- LOGOUT (POST) -->
+            <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Wyloguj</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- komunikaty -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="grid">
+
+        <!-- 1) Produkty - ALL -->
+        <a href="/products/" class="card">
+            <div class="tag">Dostęp: wszyscy</div>
+            <div class="icon">📋</div>
+            <h3>Produkty</h3>
+            <p>Lista produktów i ich stan magazynowy</p>
+        </a>
+
+        <!-- 2) Dodaj produkt - OWNER/WORKER -->
+        <a href="/products/add/"
+           class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' or role == 'WORKER' %}Edycja{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">➕</div>
+            <h3>Dodaj produkt</h3>
+            <p>Dodaj nowy produkt z objętością i magazynem</p>
+        </a>
+
+        <!-- 3) Operacje magazynowe - OWNER/WORKER -->
+        <a href="/operation/add/"
+           class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' or role == 'WORKER' %}Edycja{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">🧾</div>
+            <h3>Operacje magazynowe</h3>
+            <p>Przyjęcia i wydania produktów (IN/OUT)</p>
+        </a>
+
+        <!-- 4) Przesunięcia - OWNER/WORKER -->
+        <a href="/operation/move/"
+           class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' or role == 'WORKER' %}Edycja{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">🔁</div>
+            <h3>Przesunięcia</h3>
+            <p>Zmiana lokalizacji produktów (MOVE)</p>
+        </a>
+
+        <!-- 5) Przyjęcie z optymalizacją - OWNER/WORKER -->
+        <a href="/operation/add-smart/"
+           class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' or role == 'WORKER' %}Edycja{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">🧠</div>
+            <h3>Przyjęcie z optymalizacją</h3>
+            <p>Dobór lokalizacji na podstawie wolnej pojemności</p>
+        </a>
+
+        <!-- 6) Historia operacji - ALL -->
+        <a href="/operations/" class="card">
+            <div class="tag">Dostęp: wszyscy</div>
+            <div class="icon">🕒</div>
+            <h3>Historia operacji</h3>
+            <p>Rejestr wszystkich operacji magazynowych</p>
+        </a>
+
+        <!-- 7) Dashboard - ALL -->
+        <a href="/dashboard/" class="card">
+            <div class="tag">Dostęp: wszyscy</div>
+            <div class="icon">📊</div>
+            <h3>Dashboard</h3>
+            <p>Podgląd wykorzystania magazynów i produktów</p>
+        </a>
+
+        <!-- 8) Raporty - OWNER -->
+        <a href="/reports/"
+           class="card {% if role != 'OWNER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' %}Właściciel{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">📄</div>
+            <h3>Raporty</h3>
+            <p>Eksport CSV / PDF (stan magazynu i historia)</p>
+        </a>
+
+        <!-- 9) Administracja - OWNER -->
+        <a href="/admin/"
+           class="card {% if role != 'OWNER' %}locked{% endif %}">
+            <div class="tag">
+                {% if role == 'OWNER' %}Właściciel{% else %}Brak dostępu{% endif %}
+            </div>
+            <div class="icon">⚙️</div>
+            <h3>Administracja</h3>
+            <p>Panel administracyjny Django (użytkownicy, dane)</p>
+        </a>
+
+    </div>
+
+</div>
+
+<!-- BUG WIDGET (floating) -->
+<button class="bug-fab" type="button" id="bugFab" aria-label="Zgłoś błąd">🐞</button>
+
+<div class="bug-panel" id="bugPanel" role="dialog" aria-modal="true" aria-labelledby="bugTitle">
+    <div class="row">
+        <h2 id="bugTitle">Zgłoś błąd / sugestię</h2>
+        <button type="button" class="bug-close" id="bugClose" aria-label="Zamknij">✕</button>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label for="bug_title">Tytuł</label>
+        <input id="bug_title" type="text" name="title" maxlength="120" required>
+
+        <label for="bug_desc">Opis</label>
+        <textarea id="bug_desc" name="description" required></textarea>
+
+        <div class="hint">
+            Zgłoszenie zostanie zapisane w systemie i przypisane do Twojego konta.
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" type="submit">Wyślij</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const fab = document.getElementById('bugFab');
+    const panel = document.getElementById('bugPanel');
+    const closeBtn = document.getElementById('bugClose');
+
+    function openPanel() {
+        panel.classList.add('open');
+        // focus na pierwsze pole
+        const first = panel.querySelector('input, textarea, button');
+        if (first) first.focus();
+    }
+
+    function closePanel() {
+        panel.classList.remove('open');
+        fab.focus();
+    }
+
+    fab.addEventListener('click', () => {
+        if (panel.classList.contains('open')) closePanel();
+        else openPanel();
+    });
+
+    closeBtn.addEventListener('click', closePanel);
+
+    // zamknięcie po kliknięciu poza panelem
+    document.addEventListener('click', (e) => {
+        if (!panel.classList.contains('open')) return;
+        if (panel.contains(e.target) || e.target === fab) return;
+        closePanel();
+    });
+
+    // ESC zamyka panel
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+    });
+</script>
+
+</body>
+</html>

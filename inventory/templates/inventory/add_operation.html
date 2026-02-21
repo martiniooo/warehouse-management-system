@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Nowa operacja magazynowa</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --accent: #198754;
+            --accent-hover: #157347;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container { max-width: 600px; margin: auto; }
+        h1 { margin-bottom: 25px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .info {
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #f3f5f7;
+            color: #2e2e2e;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover { background-color: var(--accent-hover); }
+
+        .hidden { display: none; }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+    <h1>➕ Nowa operacja magazynowa</h1>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- PRODUKT (unikalny, bez duplikatów) -->
+            <div class="form-group">
+                <label>Produkt</label>
+                <select name="product_name" id="productSelect" required>
+                    {% for product in products %}
+                        <option value="{{ product.name }}" data-total="{{ product.total_quantity }}">
+                            {{ product.name }} (łącznie: {{ product.total_quantity }} szt.)
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="hint">Produkty są łączone ze wszystkich lokalizacji</div>
+            </div>
+
+            <!-- TYP -->
+            <div class="form-group">
+                <label>Typ operacji</label>
+                <select name="operation_type" id="typeSelect" required>
+                    <option value="IN">Przyjęcie</option>
+                    <option value="OUT">Wydanie</option>
+                </select>
+                <div class="hint">Przyjęcie wymaga wyboru lokalizacji (magazynu)</div>
+            </div>
+
+            <!-- MAGAZYN/LOKALIZACJA (tylko dla IN) -->
+            <div class="form-group" id="locationGroup">
+                <label>Magazyn / lokalizacja</label>
+                <select name="location_id" id="locationSelect">
+                    {% for location in locations %}
+                        <option value="{{ location.id }}">
+                            {{ location.name }} (wolne: {{ location.free_capacity|floatformat:2 }} m³)
+                        </option>
+                    {% endfor %}
+                </select>
+                <div class="hint">Pokazana jest aktualna wolna pojemność lokalizacji</div>
+            </div>
+
+            <!-- ILOŚĆ -->
+            <div class="form-group">
+                <label>Ilość</label>
+                <input type="number" name="quantity" id="qtyInput" min="1" required>
+            </div>
+
+            <!-- PODGLĄD DLA OUT -->
+            <div class="info hidden" id="outInfo">
+                Po wydaniu zostanie: <b><span id="afterOut">—</span></b> szt.
+            </div>
+
+            <button type="submit">Zapisz operację</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const typeSelect = document.getElementById('typeSelect');
+    const locationGroup = document.getElementById('locationGroup');
+    const productSelect = document.getElementById('productSelect');
+    const qtyInput = document.getElementById('qtyInput');
+    const outInfo = document.getElementById('outInfo');
+    const afterOut = document.getElementById('afterOut');
+
+    function updateUI() {
+        const type = typeSelect.value;
+
+        // IN -> pokaż wybór magazynu, OUT -> ukryj
+        if (type === 'IN') {
+            locationGroup.classList.remove('hidden');
+            outInfo.classList.add('hidden');
+        } else {
+            locationGroup.classList.add('hidden');
+            outInfo.classList.remove('hidden');
+        }
+
+        updateAfterOut();
+    }
+
+    function updateAfterOut() {
+        const type = typeSelect.value;
+        if (type !== 'OUT') return;
+
+        const selected = productSelect.options[productSelect.selectedIndex];
+        const total = parseInt(selected.dataset.total || '0', 10);
+        const qty = parseInt(qtyInput.value || '0', 10);
+
+        const remaining = total - qty;
+        afterOut.textContent = isNaN(remaining) ? '—' : remaining;
+    }
+
+    typeSelect.addEventListener('change', updateUI);
+    productSelect.addEventListener('change', updateAfterOut);
+    qtyInput.addEventListener('input', updateAfterOut);
+
+    // init
+    updateUI();
+</script>
+
+</body>
+</html>

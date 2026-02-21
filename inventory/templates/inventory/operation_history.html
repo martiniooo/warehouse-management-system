@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Historia operacji</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+
+            --in: #198754;
+            --out: #dc3545;
+            --move: #0d6efd;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        /* ===== KARTA ===== */
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        /* ===== TABELA ===== */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f3f5f7;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .badge-in { background-color: var(--in); }
+        .badge-out { background-color: var(--out); }
+        .badge-move { background-color: var(--move); }
+
+        .muted {
+            color: var(--muted);
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <h1>🕒 Historia operacji magazynowych</h1>
+
+    <div class="card">
+
+        <table>
+            <tr>
+                <th>Data</th>
+                <th>Produkt</th>
+                <th>Typ operacji</th>
+                <th>Ilość</th>
+                <th>Lokalizacja</th>
+            </tr>
+
+            {% for op in operations %}
+            <tr>
+                <td class="muted">{{ op.timestamp|date:"Y-m-d H:i" }}</td>
+                <td>{{ op.product.name }}</td>
+                <td>
+                    {% if op.operation_type == 'IN' %}
+                        <span class="badge badge-in">Przyjęcie</span>
+                    {% elif op.operation_type == 'OUT' %}
+                        <span class="badge badge-out">Wydanie</span>
+                    {% else %}
+                        <span class="badge badge-move">Przesunięcie</span>
+                    {% endif %}
+                </td>
+                <td>{{ op.quantity }}</td>
+                <td>{{ op.location }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Brak operacji</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+
+</div>
+
+</body>
+</html>

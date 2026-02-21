@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj produkt</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --error-bg: #f8d7da;
+            --success-bg: #d1e7dd;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container { max-width: 700px; margin: auto; }
+
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover { background-color: var(--primary-hover); }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-top: 6px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+
+        .msg {
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .msg-success { background: var(--success-bg); }
+        .msg-error { background: var(--error-bg); }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <div class="top">
+        <h1 style="margin:0;">➕ Dodaj nowy produkt</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="msg {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+
+            <label>Nazwa produktu</label>
+            <input type="text" name="name" maxlength="100" required>
+
+            <label>Kategoria</label>
+            <input type="text" name="category" maxlength="100" required>
+
+            <label>Objętość jednostkowa (m³)</label>
+            <input type="number" name="volume" step="0.01" min="0.01" required>
+            <div class="hint">Np. 0.05 oznacza 0,05 m³ na 1 sztukę</div>
+
+            <label>Ilość (szt.)</label>
+            <input type="number" name="quantity" min="1" required>
+
+            <label>Lokalizacja (magazyn)</label>
+            <select name="location_id" required>
+                {% for loc in locations %}
+                    <option value="{{ loc.id }}">
+                        {{ loc.name }} (wolne: {{ loc.free_capacity|floatformat:2 }} m³)
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button class="btn" type="submit" style="margin-top:18px; width:100%;">
+                Zapisz produkt
+            </button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Brak uprawnień</title>
+
+    <style>
+        :root{
+            --bg: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card:#fff;
+            --text:#2e2e2e;
+            --muted:#6c757d;
+            --accent:#0d6efd;
+            --danger:#dc3545;
+        }
+
+        *{ box-sizing: border-box }
+
+        body{
+            margin:0;
+            padding:30px;
+            font-family:"Segoe UI", Arial, sans-serif;
+            background:var(--bg);
+            color:var(--text);
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+
+        .card{
+            max-width:420px;
+            background:var(--card);
+            border-radius:18px;
+            padding:28px;
+            box-shadow:0 12px 30px rgba(0,0,0,0.08);
+            text-align:center;
+        }
+
+        .icon{
+            font-size:48px;
+            margin-bottom:10px;
+        }
+
+        h1{
+            margin:10px 0;
+        }
+
+        p{
+            color:var(--muted);
+            font-size:14px;
+            line-height:1.4;
+        }
+
+        .actions{
+            margin-top:20px;
+        }
+
+        a{
+            display:inline-block;
+            padding:10px 18px;
+            border-radius:12px;
+            background:var(--accent);
+            color:white;
+            text-decoration:none;
+            font-weight:700;
+        }
+
+        a:hover{
+            opacity:0.9;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <div class="icon">🔒</div>
+    <h1>Brak uprawnień</h1>
+    <p>
+        Nie masz dostępu do tej sekcji systemu.<br>
+        Jeśli uważasz, że to błąd – skontaktuj się z właścicielem.
+    </p>
+
+    <div class="actions">
+        <a href="{% url 'home' %}">⬅ Powrót do strony głównej</a>
+    </div>
+</div>
+
+</body>
+</html>

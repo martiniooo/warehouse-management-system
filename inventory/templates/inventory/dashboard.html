@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard magazynu</title>
+
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        h1, h2, h3, h4 {
+            margin-top: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        /* ===== UNIWERSALNA KARTA ===== */
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+            margin-bottom: 25px;
+        }
+
+        /* ===== KPI ===== */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi span {
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .kpi strong {
+            display: block;
+            font-size: 30px;
+            margin-top: 8px;
+        }
+
+        /* ===== LOKALIZACJE ===== */
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-pusta .badge { background-color: var(--success); }
+        .status-srednia .badge { background-color: var(--warning); color: #000; }
+        .status-pelna .badge { background-color: var(--danger); }
+
+        .meta {
+            font-size: 14px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        /* ===== TABELA ===== */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f3f5f7;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+
+    <h1>📦 Dashboard magazynu</h1>
+
+    <!-- ===== KPI ===== -->
+
+    <div class="kpi-grid">
+        <div class="card kpi">
+            <span>Całkowita pojemność</span>
+            <strong>{{ total_capacity }} m³</strong>
+        </div>
+
+        <div class="card kpi">
+            <span>Zajęta przestrzeń</span>
+            <strong>{{ total_used }} m³</strong>
+        </div>
+
+        <div class="card kpi">
+            <span>Wykorzystanie</span>
+            <strong>{{ total_usage_percent }}%</strong>
+        </div>
+    </div>
+
+    <h2>Lokalizacje magazynowe</h2>
+
+    {% for item in dashboard_data %}
+        <div class="card
+            {% if item.status == 'pełna' %}status-pelna
+            {% elif item.status == 'średnia' %}status-srednia
+            {% else %}status-pusta{% endif %}">
+
+            <div class="location-header">
+                <h3>{{ item.location.name }}</h3>
+                <span class="badge">{{ item.status }}</span>
+            </div>
+
+            <div class="meta">
+                Zajęte: {{ item.used }} m³ |
+                Wolne: {{ item.free }} m³ |
+                Wykorzystanie: {{ item.usage_percent }}%
+            </div>
+
+            <h4>Produkty w lokalizacji</h4>
+
+            <table>
+                <tr>
+                    <th>Produkt</th>
+                    <th>Ilość (szt.)</th>
+                    <th>Zajęta objętość (m³)</th>
+                </tr>
+
+                {% for p in item.products %}
+                <tr>
+                    <td>{{ p.name }}</td>
+                    <td>{{ p.quantity }}</td>
+                    <td>{{ p.used_volume }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">Brak produktów</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+    {% endfor %}
+
+</div>
+
+</body>
+</html>
