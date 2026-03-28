@@ -212,17 +212,17 @@
                     <td>{{ loc.used_capacity|floatformat:2 }}</td>
                     <td>
                         {% if loc.free_capacity <= 0 %}
-                            <span class="badge badge-warning">{{ loc.free_capacity|floatformat:2 }}</span>
+                        <span class="badge badge-warning">{{ loc.free_capacity|floatformat:2 }}</span>
                         {% else %}
-                            <span class="badge">{{ loc.free_capacity|floatformat:2 }}</span>
+                        <span class="badge">{{ loc.free_capacity|floatformat:2 }}</span>
                         {% endif %}
                     </td>
                     <td>
-                        <div class="actions">
-                            <a href="{% url 'edit_location' loc.id %}" class="btn btn-secondary">Edytuj</a>
-                            {% if role == 'OWNER' %}
-                                <a href="{% url 'delete_location' loc.id %}" class="btn btn-danger">Usuń</a>
-                            {% endif %}
+                         <div class="actions">
+                        <a href="{% url 'edit_location' loc.id %}" class="btn btn-secondary">Edytuj</a>
+                        {% if role == 'OWNER' %}
+                        <a href="{% url 'delete_location' loc.id %}" class="btn btn-danger">Usuń</a>
+                        {% endif %}
                         </div>
                     </td>
                 </tr>

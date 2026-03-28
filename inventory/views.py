@@ -191,8 +191,23 @@ def edit_bug_report(request, report_id):
 @role_required(['OWNER', 'WORKER'])
 def location_list(request):
     locations = Location.objects.all().order_by('name')
+
+    enriched_locations = []
+    for loc in locations:
+        products = Product.objects.filter(location=loc, quantity__gt=0)
+        used = sum(p.volume * p.quantity for p in products)
+        free = loc.capacity - used
+
+        enriched_locations.append({
+            'id': loc.id,
+            'name': loc.name,
+            'capacity': loc.capacity,
+            'used_capacity': used,
+            'free_capacity': free,
+        })
+
     return render(request, 'inventory/location_list.html', {
-        'locations': locations,
+        'locations': enriched_locations,
         'role': get_user_role(request.user),
     })
 
