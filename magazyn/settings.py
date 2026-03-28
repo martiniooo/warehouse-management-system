@@ -57,6 +57,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+
+    # Static files na Azure
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -93,13 +95,19 @@ WSGI_APPLICATION = 'magazyn.wsgi.application'
 
 
 # ======================
-# DATABASE
+# DATABASE (AZURE FIX)
 # ======================
+
+if 'WEBSITE_HOSTNAME' in os.environ:
+    db_path = Path('/home/data/db.sqlite3')
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+else:
+    db_path = BASE_DIR / 'db.sqlite3'
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': db_path,
     }
 }
 
@@ -128,7 +136,7 @@ USE_TZ = True
 
 
 # ======================
-# STATIC FILES (AZURE READY)
+# STATIC FILES (AZURE)
 # ======================
 
 STATIC_URL = 'static/'
