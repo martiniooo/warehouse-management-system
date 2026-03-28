@@ -29,6 +29,11 @@ ALLOWED_HOSTS = os.environ.get(
     '127.0.0.1,localhost'
 ).split(',')
 
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'DJANGO_CSRF_TRUSTED_ORIGINS',
+    'http://127.0.0.1,http://localhost'
+).split(',')
+
 
 # ======================
 # APPLICATIONS
@@ -52,8 +57,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-
-    # 🔥 WAŻNE dla Azure (static files)
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -153,11 +156,3 @@ LOGOUT_REDIRECT_URL = 'login'
 # ======================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://magazyn-marci-app-ecg2hpgddrfed3hp.polandcentral-01.azurewebsites.net/',
-]
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    'DJANGO_CSRF_TRUSTED_ORIGINS',
-    'http://127.0.0.1,http://localhost'
-).split(',')
