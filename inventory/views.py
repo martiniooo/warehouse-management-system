@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -183,6 +183,117 @@ def edit_bug_report(request, report_id):
 
     return render(request, 'inventory/edit_bug_report.html', {'report': report})
 
+# ==========================
+# LOCATIONS
+# ==========================
+
+@login_required
+@role_required(['OWNER', 'WORKER'])
+def location_list(request):
+    locations = Location.objects.all().order_by('name')
+    return render(request, 'inventory/location_list.html', {
+        'locations': locations,
+        'role': get_user_role(request.user),
+    })
+
+@login_required
+@role_required(['OWNER', 'WORKER'])
+def add_location(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        capacity_raw = request.POST.get('capacity', '').strip()
+
+        if not name or not capacity_raw:
+            messages.error(request, 'Uzupełnij wszystkie pola.')
+            return redirect('add_location')
+
+        try:
+            capacity = float(capacity_raw.replace(',', '.'))
+        except ValueError:
+            messages.error(request, 'Pojemność musi być poprawną liczbą.')
+            return redirect('add_location')
+
+        if capacity <= 0:
+            messages.error(request, 'Pojemność musi być większa od 0.')
+            return redirect('add_location')
+
+        if Location.objects.filter(name__iexact=name).exists():
+            messages.error(request, 'Lokalizacja o takiej nazwie już istnieje.')
+            return redirect('add_location')
+
+        Location.objects.create(name=name, capacity=capacity)
+        messages.success(request, 'Lokalizacja została dodana.')
+        return redirect('location_list')
+
+    return render(request, 'inventory/add_location.html')
+
+
+@login_required
+@role_required(['OWNER', 'WORKER'])
+def edit_location(request, location_id):
+    location = get_object_or_404(Location, id=location_id)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        capacity_raw = request.POST.get('capacity', '').strip()
+
+        if not name or not capacity_raw:
+            messages.error(request, 'Uzupełnij wszystkie pola.')
+            return redirect('edit_location', location_id=location.id)
+
+        try:
+            new_capacity = float(capacity_raw.replace(',', '.'))
+        except ValueError:
+            messages.error(request, 'Pojemność musi być poprawną liczbą.')
+            return redirect('edit_location', location_id=location.id)
+
+        if new_capacity <= 0:
+            messages.error(request, 'Pojemność musi być większa od 0.')
+            return redirect('edit_location', location_id=location.id)
+
+        used_capacity = location.used_capacity()
+        if new_capacity < used_capacity:
+            messages.error(
+                request,
+                f'Nie można ustawić pojemności mniejszej niż aktualnie zajęta ({used_capacity:.2f} m³).'
+            )
+            return redirect('edit_location', location_id=location.id)
+
+        duplicate = Location.objects.filter(name__iexact=name).exclude(id=location.id).exists()
+        if duplicate:
+            messages.error(request, 'Inna lokalizacja o takiej nazwie już istnieje.')
+            return redirect('edit_location', location_id=location.id)
+
+        location.name = name
+        location.capacity = new_capacity
+        location.save()
+
+        messages.success(request, 'Lokalizacja została zaktualizowana.')
+        return redirect('location_list')
+
+    return render(request, 'inventory/edit_location.html', {
+        'location': location
+    })
+
+
+@login_required
+@role_required(['OWNER'])
+def delete_location(request, location_id):
+    location = get_object_or_404(Location, id=location_id)
+
+    has_products = Product.objects.filter(location=location, quantity__gt=0).exists()
+    if has_products:
+        messages.error(request, 'Nie można usunąć lokalizacji, ponieważ znajdują się w niej produkty.')
+        return redirect('location_list')
+
+    if request.method == 'POST':
+        location.delete()
+        messages.success(request, 'Lokalizacja została usunięta.')
+        return redirect('location_list')
+
+    return render(request, 'inventory/delete_location.html', {
+        'location': location
+    })
 
 # ==========================
 # PRODUCTS - LIST (ALL ROLES)

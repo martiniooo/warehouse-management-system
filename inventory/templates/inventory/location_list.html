@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Magazyny i lokalizacje</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: rgba(255,255,255,0.95);
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --danger: #dc3545;
+            --danger-hover: #bb2d3b;
+            --warning: #fff3cd;
+            --warning-text: #856404;
+            --success-bg: #d1e7dd;
+            --success-text: #0f5132;
+            --error-bg: #f8d7da;
+            --error-text: #842029;
+            --border: rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0 0 6px 0;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        .btn-secondary:hover {
+            background: #dde2e6;
+        }
+
+        .msg {
+            padding: 12px 14px;
+            border-radius: 12px;
+            margin: 0 0 14px 0;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        .msg-success {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .msg-error {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eceff3;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f7f9fc;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #fbfcfe;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            background: #eef4ff;
+            color: #0d6efd;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: var(--warning-text);
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .empty {
+            padding: 26px;
+            text-align: center;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    {% include 'inventory/back_home.html' %}
+
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="msg {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="topbar">
+                <div>
+                    <h1>🏢 Magazyny i lokalizacje</h1>
+                    <p class="subtitle">Dodawanie, edycja i kontrola pojemności magazynów.</p>
+                </div>
+                <a href="{% url 'add_location' %}" class="btn btn-primary">➕ Dodaj magazyn</a>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Nazwa</th>
+                    <th>Pojemność (m³)</th>
+                    <th>Zajęte (m³)</th>
+                    <th>Wolne (m³)</th>
+                    <th>Akcje</th>
+                </tr>
+
+                {% for loc in locations %}
+                <tr>
+                    <td><strong>{{ loc.name }}</strong></td>
+                    <td>{{ loc.capacity|floatformat:2 }}</td>
+                    <td>{{ loc.used_capacity|floatformat:2 }}</td>
+                    <td>
+                        {% if loc.free_capacity <= 0 %}
+                            <span class="badge badge-warning">{{ loc.free_capacity|floatformat:2 }}</span>
+                        {% else %}
+                            <span class="badge">{{ loc.free_capacity|floatformat:2 }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <a href="{% url 'edit_location' loc.id %}" class="btn btn-secondary">Edytuj</a>
+                            {% if role == 'OWNER' %}
+                                <a href="{% url 'delete_location' loc.id %}" class="btn btn-danger">Usuń</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty">Brak dodanych lokalizacji magazynowych.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>
