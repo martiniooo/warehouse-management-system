@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -23,7 +24,12 @@
             margin: 0;
             padding: 30px;
             font-family: "Segoe UI", Arial, sans-serif;
-            background: var(--bg-gradient);
+
+            background-image: url("{% static 'images/logoo.png' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+
             color: var(--text);
         }
 
@@ -123,19 +129,22 @@
             gap: 18px;
             align-items: stretch;
         }
-
         .card {
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(8px);
+
             border-radius: 16px;
             padding: 22px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
-            border: 1px solid rgba(0,0,0,0.03);
-            text-decoration: none;
-            color: inherit;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            position: relative;
-            overflow: hidden;
+             text-decoration: none;
+             color: #2e2e2e;
+
+             border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
+        
+
 
         .card:hover {
             transform: translateY(-4px);
@@ -149,6 +158,7 @@
 
         .card h3 {
             margin: 0 0 8px 0;
+            font-weight: 700;
         }
 
         .card p {
@@ -404,6 +414,13 @@
             <div class="icon">📄</div>
             <h3>Raporty</h3>
             <p>Eksport CSV / PDF (stan magazynu i historia)</p>
+        </a>
+
+        <a href="{% url 'my_bug_reports' %}" class="card">
+            <div class="tag">Dostęp: wszyscy</div>
+            <div class="icon">🐞</div>
+            <h3>Moje zgłoszenia</h3>
+            <p>Podgląd i edycja zgłoszonych błędów oraz sugestii</p>
         </a>
 
         <!-- 9) Administracja - OWNER -->

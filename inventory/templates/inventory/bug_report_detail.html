@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Szczegóły zgłoszenia</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        .meta {
+            color: var(--muted);
+            margin-bottom: 18px;
+            line-height: 1.7;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            background: var(--accent);
+            color: white;
+            margin-right: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+    <div class="card">
+        <h1>{{ report.title }}</h1>
+
+        <div class="meta">
+            <div><strong>Status:</strong> {{ report.get_status_display }}</div>
+            <div><strong>Utworzono:</strong> {{ report.created_at }}</div>
+            <div><strong>Ostatnia aktualizacja:</strong> {{ report.updated_at }}</div>
+        </div>
+
+        <h3>Opis zgłoszenia</h3>
+        <p>{{ report.description }}</p>
+
+        {% if report.status != 'DONE' %}
+            <a class="btn" href="{% url 'edit_bug_report' report.id %}">Edytuj zgłoszenie</a>
+        {% endif %}
+        <a class="btn" href="{% url 'my_bug_reports' %}">Powrót</a>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Edycja zgłoszenia</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: #ffffff;
+            --text: #2e2e2e;
+            --muted: #6c757d;
+            --accent: #0d6efd;
+            --accent-hover: #0b5ed7;
+            --border: rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 22px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+        }
+
+        label {
+            display: block;
+            margin-top: 14px;
+            font-weight: 700;
+        }
+
+        input, textarea {
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 180px;
+            resize: vertical;
+        }
+
+        .actions {
+            margin-top: 18px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+    <div class="card">
+        <h1>✏️ Edycja zgłoszenia</h1>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label for="title">Tytuł</label>
+            <input id="title" type="text" name="title" maxlength="120" value="{{ report.title }}" required>
+
+            <label for="description">Opis</label>
+            <textarea id="description" name="description" required>{{ report.description }}</textarea>
+
+            <div class="actions">
+                <button class="btn" type="submit">Zapisz zmiany</button>
+                <a class="btn" href="{% url 'bug_report_detail' report.id %}">Anuluj</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

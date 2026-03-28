@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
@@ -144,6 +144,44 @@ def home(request):
     return render(request, 'inventory/home.html', {
         'role': role
     })
+
+@login_required
+@role_required(['OWNER', 'WORKER', 'VIEWER'])
+def my_bug_reports(request):
+    reports = BugReport.objects.filter(created_by=request.user).order_by('-created_at')
+    return render(request, 'inventory/my_bug_reports.html', {'reports': reports})
+
+
+@login_required
+@role_required(['OWNER', 'WORKER', 'VIEWER'])
+def bug_report_detail(request, report_id):
+    report = get_object_or_404(BugReport, id=report_id, created_by=request.user)
+    return render(request, 'inventory/bug_report_detail.html', {'report': report})
+
+
+@login_required
+@role_required(['OWNER', 'WORKER', 'VIEWER'])
+def edit_bug_report(request, report_id):
+    report = get_object_or_404(BugReport, id=report_id, created_by=request.user)
+
+    if report.status == 'DONE':
+        messages.error(request, 'Nie można edytować zamkniętego zgłoszenia.')
+        return redirect('bug_report_detail', report_id=report.id)
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        description = request.POST.get('description', '').strip()
+
+        if not title or not description:
+            messages.error(request, 'Uzupełnij tytuł i opis zgłoszenia.')
+        else:
+            report.title = title
+            report.description = description
+            report.save()
+            messages.success(request, 'Zgłoszenie zostało zaktualizowane.')
+            return redirect('bug_report_detail', report_id=report.id)
+
+    return render(request, 'inventory/edit_bug_report.html', {'report': report})
 
 
 # ==========================

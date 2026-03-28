@@ -6,6 +6,10 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('', views.home, name='home'),
 
+    path('bug-reports/', views.my_bug_reports, name='my_bug_reports'),
+    path('bug-reports/<int:report_id>/', views.bug_report_detail, name='bug_report_detail'),
+    path('bug-reports/<int:report_id>/edit/', views.edit_bug_report, name='edit_bug_report'),
+
     path('products/', views.product_list, name='product_list'),
     path('products/add/', views.add_product, name='add_product'),
 

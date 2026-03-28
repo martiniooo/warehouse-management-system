@@ -17,3 +17,6 @@ media/
 # IDE
 .vscode/
 .idea/
+
+staticfiles/
+.env
