@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuń produkt</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card-bg: rgba(255,255,255,0.96);
+            --text: #2e2e2e;
+            --danger: #dc3545;
+            --danger-hover: #bb2d3b;
+            --border: rgba(0,0,0,0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--danger);
+        }
+
+        p {
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 16px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        .btn-secondary:hover {
+            background: #dde2e6;
+        }
+    </style>
+</head>
+<body>
+    {% include 'inventory/back_home.html' %}
+
+    <div class="container">
+        <div class="card">
+            <h1>🗑 Usuń produkt</h1>
+            <p>
+                Czy na pewno chcesz usunąć produkt:
+                <strong>{{ product_name }}</strong>?
+            </p>
+            <p>
+                Usunięcie jest możliwe tylko wtedy, gdy łączny stan magazynowy tego produktu wynosi 0.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="actions">
+                    <button type="submit" class="btn btn-danger">Tak, usuń</button>
+                    <a href="{% url 'product_list' %}" class="btn btn-secondary">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

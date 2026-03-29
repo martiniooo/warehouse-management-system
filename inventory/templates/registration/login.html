@@ -58,6 +58,17 @@
     .footer a:hover{
       text-decoration: underline;
     }
+    .toggle-password{
+      margin-top:8px;
+      background:none;
+      border:none;
+      color:var(--accent);
+      font-weight:700;
+      cursor:pointer;
+      padding:0;
+      font-size:13px;
+      width:auto;
+    }
   </style>
 </head>
 
@@ -73,16 +84,12 @@
     <form method="post">
       {% csrf_token %}
 
-      {# Django przekazuje "next" w querystring, ale utrwalamy go też w formularzu #}
-      {% if next %}
-        <input type="hidden" name="next" value="{{ next }}">
-      {% endif %}
-
       <label>Nazwa użytkownika</label>
       <input type="text" name="username" autocomplete="username" required>
 
       <label>Hasło</label>
-      <input type="password" name="password" autocomplete="current-password" required>
+      <input type="password" name="password" id="loginPassword" autocomplete="current-password" required>
+      <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">Pokaż hasło</button>
 
       <button type="submit">Zaloguj</button>
     </form>
@@ -91,5 +98,19 @@
       Nie masz konta? <a href="{% url 'register' %}">Zarejestruj się</a>
     </div>
   </div>
+
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Ukryj hasło';
+    } else {
+        input.type = 'password';
+        btn.textContent = 'Pokaż hasło';
+    }
+}
+</script>
+
 </body>
 </html>

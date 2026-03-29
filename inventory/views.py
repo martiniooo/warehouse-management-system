@@ -8,7 +8,7 @@ from django.contrib.auth import login
 
 from functools import wraps
 
-from .models import StockOperation, Product, Location, BugReport, UserProfile
+from .models import Organization, StockOperation, Product, Location, BugReport, UserProfile
 
 import csv
 import os
@@ -49,6 +49,14 @@ def get_user_role(user):
 
     return user.userprofile.role
 
+def get_user_organization(user):
+    if not user.is_authenticated:
+        return None
+
+    if hasattr(user, 'userprofile') and user.userprofile.organization:
+        return user.userprofile.organization
+
+    return None
 
 def role_required(allowed_roles):
     def decorator(view_func):
@@ -67,51 +75,92 @@ def role_required(allowed_roles):
 # ==========================
 
 def register(request):
-    is_first_user = (User.objects.count() == 0)
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
+        password2 = request.POST.get('password2', '')
+        organization_name = request.POST.get('organization_name', '').strip()
+
+        if not username or not password or not password2 or not organization_name:
+            return render(request, 'registration/register.html', {
+                'error': 'Uzupełnij wszystkie pola.'
+            })
+
+        if password != password2:
+            return render(request, 'registration/register.html', {
+                'error': 'Hasła nie są takie same.'
+            })
+
+        if User.objects.filter(username=username).exists():
+            return render(request, 'registration/register.html', {
+                'error': 'Użytkownik już istnieje.'
+            })
+
+        user = User.objects.create_user(username=username, password=password)
+
+        organization = Organization.objects.create(
+            name=organization_name,
+            owner=user
+        )
+
+        UserProfile.objects.create(
+            user=user,
+            role='OWNER',
+            organization=organization
+        )
+
+        login(request, user)
+        return redirect('home')
+
+    return render(request, 'registration/register.html')
+
+@login_required
+@role_required(['OWNER'])
+def add_staff_user(request):
+    owner_org = get_user_organization(request.user)
+
+    if not owner_org:
+        return render(request, 'inventory/error.html', {
+            'message': 'Nie znaleziono organizacji właściciela.'
+        })
 
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
         password2 = request.POST.get('password2', '')
+        role = request.POST.get('role', '').strip()
 
-        if not username or not password or not password2:
-            return render(request, 'registration/register.html', {
-                'error': 'Uzupełnij wszystkie pola.',
-                'is_first_user': is_first_user
+        if not username or not password or not password2 or not role:
+            return render(request, 'inventory/add_staff_user.html', {
+                'error': 'Uzupełnij wszystkie pola.'
             })
 
         if password != password2:
-            return render(request, 'registration/register.html', {
-                'error': 'Hasła nie są takie same.',
-                'is_first_user': is_first_user
+            return render(request, 'inventory/add_staff_user.html', {
+                'error': 'Hasła nie są takie same.'
+            })
+
+        if role not in ['WORKER', 'VIEWER']:
+            return render(request, 'inventory/add_staff_user.html', {
+                'error': 'Wybierz poprawną rolę.'
             })
 
         if User.objects.filter(username=username).exists():
-            return render(request, 'registration/register.html', {
-                'error': 'Użytkownik już istnieje.',
-                'is_first_user': is_first_user
+            return render(request, 'inventory/add_staff_user.html', {
+                'error': 'Użytkownik o takiej nazwie już istnieje.'
             })
 
-        # ROLA: pierwszy user = OWNER, kolejni: WORKER/VIEWER
-        if is_first_user:
-            role = 'OWNER'
-        else:
-            role = request.POST.get('role')
-            if role not in ['WORKER', 'VIEWER']:
-                return render(request, 'registration/register.html', {
-                    'error': 'Wybierz poprawną rolę.',
-                    'is_first_user': is_first_user
-                })
-
         user = User.objects.create_user(username=username, password=password)
-        UserProfile.objects.create(user=user, role=role)
+        UserProfile.objects.create(
+            user=user,
+            role=role,
+            organization=owner_org
+        )
 
-        login(request, user)
+        messages.success(request, f'Utworzono konto użytkownika "{username}".')
         return redirect('home')
 
-    return render(request, 'registration/register.html', {
-        'is_first_user': is_first_user
-    })
+    return render(request, 'inventory/add_staff_user.html')
 
 
 # ==========================
@@ -121,6 +170,8 @@ def register(request):
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def home(request):
+    org = get_user_organization(request.user)
+
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
@@ -131,38 +182,64 @@ def home(request):
             BugReport.objects.create(
                 title=title,
                 description=description,
-                created_by=request.user
+                created_by=request.user,
+                organization=org
             )
             messages.success(request, 'Zgłoszenie zostało zapisane. Dziękujemy!')
             return redirect('home')
 
-    # ✅ rola dla template
     role = getattr(getattr(request.user, 'userprofile', None), 'role', 'VIEWER')
     if request.user.is_superuser:
         role = 'OWNER'
 
     return render(request, 'inventory/home.html', {
-        'role': role
+        'role': get_user_role(request.user)
     })
+
 
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def my_bug_reports(request):
-    reports = BugReport.objects.filter(created_by=request.user).order_by('-created_at')
-    return render(request, 'inventory/my_bug_reports.html', {'reports': reports})
+    org = get_user_organization(request.user)
+
+    reports = BugReport.objects.filter(
+        created_by=request.user,
+        organization=org
+    ).order_by('-created_at')
+
+    return render(request, 'inventory/my_bug_reports.html', {
+        'reports': reports
+    })
 
 
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def bug_report_detail(request, report_id):
-    report = get_object_or_404(BugReport, id=report_id, created_by=request.user)
-    return render(request, 'inventory/bug_report_detail.html', {'report': report})
+    org = get_user_organization(request.user)
+
+    report = get_object_or_404(
+        BugReport,
+        id=report_id,
+        created_by=request.user,
+        organization=org
+    )
+
+    return render(request, 'inventory/bug_report_detail.html', {
+        'report': report
+    })
 
 
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def edit_bug_report(request, report_id):
-    report = get_object_or_404(BugReport, id=report_id, created_by=request.user)
+    org = get_user_organization(request.user)
+
+    report = get_object_or_404(
+        BugReport,
+        id=report_id,
+        created_by=request.user,
+        organization=org
+    )
 
     if report.status == 'DONE':
         messages.error(request, 'Nie można edytować zamkniętego zgłoszenia.')
@@ -181,7 +258,9 @@ def edit_bug_report(request, report_id):
             messages.success(request, 'Zgłoszenie zostało zaktualizowane.')
             return redirect('bug_report_detail', report_id=report.id)
 
-    return render(request, 'inventory/edit_bug_report.html', {'report': report})
+    return render(request, 'inventory/edit_bug_report.html', {
+        'report': report
+    })
 
 # ==========================
 # LOCATIONS
@@ -190,11 +269,12 @@ def edit_bug_report(request, report_id):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def location_list(request):
-    locations = Location.objects.all().order_by('name')
+    org = get_user_organization(request.user)
+    locations = Location.objects.filter(organization=org).order_by('name')
 
     enriched_locations = []
     for loc in locations:
-        products = Product.objects.filter(location=loc, quantity__gt=0)
+        products = Product.objects.filter(location=loc, quantity__gt=0, organization=org)
         used = sum(p.volume * p.quantity for p in products)
         free = loc.capacity - used
 
@@ -211,9 +291,12 @@ def location_list(request):
         'role': get_user_role(request.user),
     })
 
+
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def add_location(request):
+    org = get_user_organization(request.user)
+
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         capacity_raw = request.POST.get('capacity', '').strip()
@@ -232,11 +315,15 @@ def add_location(request):
             messages.error(request, 'Pojemność musi być większa od 0.')
             return redirect('add_location')
 
-        if Location.objects.filter(name__iexact=name).exists():
+        if Location.objects.filter(name__iexact=name, organization=org).exists():
             messages.error(request, 'Lokalizacja o takiej nazwie już istnieje.')
             return redirect('add_location')
 
-        Location.objects.create(name=name, capacity=capacity)
+        Location.objects.create(
+            name=name,
+            capacity=capacity,
+            organization=org
+        )
         messages.success(request, 'Lokalizacja została dodana.')
         return redirect('location_list')
 
@@ -246,7 +333,13 @@ def add_location(request):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def edit_location(request, location_id):
-    location = get_object_or_404(Location, id=location_id)
+    org = get_user_organization(request.user)
+
+    location = get_object_or_404(
+        Location,
+        id=location_id,
+        organization=org
+    )
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
@@ -274,7 +367,12 @@ def edit_location(request, location_id):
             )
             return redirect('edit_location', location_id=location.id)
 
-        duplicate = Location.objects.filter(name__iexact=name).exclude(id=location.id).exists()
+        duplicate = (
+            Location.objects
+            .filter(name__iexact=name, organization=org)
+            .exclude(id=location.id)
+            .exists()
+        )
         if duplicate:
             messages.error(request, 'Inna lokalizacja o takiej nazwie już istnieje.')
             return redirect('edit_location', location_id=location.id)
@@ -294,9 +392,20 @@ def edit_location(request, location_id):
 @login_required
 @role_required(['OWNER'])
 def delete_location(request, location_id):
-    location = get_object_or_404(Location, id=location_id)
+    org = get_user_organization(request.user)
 
-    has_products = Product.objects.filter(location=location, quantity__gt=0).exists()
+    location = get_object_or_404(
+        Location,
+        id=location_id,
+        organization=org
+    )
+
+    has_products = Product.objects.filter(
+        location=location,
+        quantity__gt=0,
+        organization=org
+    ).exists()
+
     if has_products:
         messages.error(request, 'Nie można usunąć lokalizacji, ponieważ znajdują się w niej produkty.')
         return redirect('location_list')
@@ -310,6 +419,7 @@ def delete_location(request, location_id):
         'location': location
     })
 
+
 # ==========================
 # PRODUCTS - LIST (ALL ROLES)
 # ==========================
@@ -317,13 +427,57 @@ def delete_location(request, location_id):
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def product_list(request):
+    org = get_user_organization(request.user)
+
     products = (
         Product.objects
-        .values('name')
+        .filter(organization=org)
+        .values('category', 'name')
         .annotate(total_quantity=Sum('quantity'))
-        .order_by('name')
+        .order_by('category', 'name')
     )
-    return render(request, 'inventory/product_list.html', {'products': products})
+
+    grouped_products = {}
+    for product in products:
+        category = product['category'].strip() if product['category'] else 'Bez kategorii'
+        if category not in grouped_products:
+            grouped_products[category] = []
+        grouped_products[category].append(product)
+
+    return render(request, 'inventory/product_list.html', {
+        'grouped_products': grouped_products,
+        'role': get_user_role(request.user),
+    })
+
+
+@login_required
+@role_required(['OWNER'])
+def delete_product(request, product_name):
+    org = get_user_organization(request.user)
+    product_name = product_name.strip()
+
+    total_quantity = (
+        Product.objects
+        .filter(name=product_name, organization=org)
+        .aggregate(total=Sum('quantity'))
+        .get('total') or 0
+    )
+
+    if total_quantity > 0:
+        messages.error(
+            request,
+            'Nie można usunąć produktu, ponieważ jego stan magazynowy jest większy od 0.'
+        )
+        return redirect('product_list')
+
+    if request.method == 'POST':
+        Product.objects.filter(name=product_name, organization=org).delete()
+        messages.success(request, f'Produkt "{product_name}" został usunięty.')
+        return redirect('product_list')
+
+    return render(request, 'inventory/delete_product.html', {
+        'product_name': product_name
+    })
 
 
 # ==========================
@@ -333,6 +487,8 @@ def product_list(request):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def add_product(request):
+    org = get_user_organization(request.user)
+
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         category = request.POST.get('category', '').strip()
@@ -359,7 +515,7 @@ def add_product(request):
             messages.error(request, 'Objętość musi być większa od 0.')
             return redirect('add_product')
 
-        location = Location.objects.get(id=location_id)
+        location = get_object_or_404(Location, id=location_id, organization=org)
 
         required_volume = volume * quantity
         if location.free_capacity() < required_volume:
@@ -371,6 +527,7 @@ def add_product(request):
             category=category,
             volume=volume,
             location=location,
+            organization=org,
             defaults={'quantity': 0}
         )
         product.quantity += quantity
@@ -379,10 +536,8 @@ def add_product(request):
         messages.success(request, 'Produkt został dodany.')
         return redirect('product_list')
 
-    locations = Location.objects.all().order_by('name')
+    locations = Location.objects.filter(organization=org).order_by('name')
     return render(request, 'inventory/add_product.html', {'locations': locations})
-
-
 # ==========================
 # OPERATIONS ADD (OWNER/WORKER)
 # ==========================
@@ -390,6 +545,8 @@ def add_product(request):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def add_operation(request):
+    org = get_user_organization(request.user)
+
     if request.method == 'POST':
         product_name = request.POST.get('product_name', '').strip()
         operation_type = request.POST.get('operation_type', '').strip()
@@ -403,7 +560,7 @@ def add_operation(request):
 
         product_ref = (
             Product.objects
-            .filter(name=product_name)
+            .filter(name=product_name, organization=org)
             .order_by('-quantity')
             .first()
         )
@@ -416,7 +573,7 @@ def add_operation(request):
             if not location_id:
                 return render(request, 'inventory/error.html', {'message': 'Wybierz lokalizację (magazyn) dla przyjęcia'})
 
-            location = Location.objects.get(id=location_id)
+            location = get_object_or_404(Location, id=location_id, organization=org)
 
             required_volume = product_ref.volume * quantity
             if location.free_capacity() < required_volume:
@@ -427,6 +584,7 @@ def add_operation(request):
                 category=product_ref.category,
                 volume=product_ref.volume,
                 location=location,
+                organization=org,
                 defaults={'quantity': 0}
             )
             target_product.quantity += quantity
@@ -435,6 +593,7 @@ def add_operation(request):
             StockOperation.objects.create(
                 product=target_product,
                 location=location,
+                organization=org,
                 operation_type='IN',
                 quantity=quantity
             )
@@ -443,7 +602,8 @@ def add_operation(request):
 
         elif operation_type == 'OUT':
             total_available = (
-                Product.objects.filter(name=product_name)
+                Product.objects
+                .filter(name=product_name, organization=org)
                 .aggregate(total=Sum('quantity'))['total'] or 0
             )
 
@@ -453,7 +613,7 @@ def add_operation(request):
             remaining = quantity
             batches = (
                 Product.objects
-                .filter(name=product_name, quantity__gt=0)
+                .filter(name=product_name, quantity__gt=0, organization=org)
                 .order_by('-quantity')
             )
 
@@ -468,6 +628,7 @@ def add_operation(request):
                 StockOperation.objects.create(
                     product=b,
                     location=b.location,
+                    organization=org,
                     operation_type='OUT',
                     quantity=take
                 )
@@ -480,18 +641,18 @@ def add_operation(request):
 
     products = (
         Product.objects
+        .filter(organization=org)
         .values('name')
         .annotate(total_quantity=Sum('quantity'))
         .order_by('name')
     )
 
-    locations = Location.objects.all()
+    locations = Location.objects.filter(organization=org).order_by('name')
 
     return render(request, 'inventory/add_operation.html', {
         'products': products,
         'locations': locations
     })
-
 
 # ==========================
 # HISTORY (ALL ROLES)
@@ -500,7 +661,13 @@ def add_operation(request):
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def operation_history(request):
-    operations = StockOperation.objects.order_by('-timestamp')
+    org = get_user_organization(request.user)
+    operations = (
+        StockOperation.objects
+        .filter(organization=org)
+        .select_related('product', 'location')
+        .order_by('-timestamp')
+    )
     return render(request, 'inventory/operation_history.html', {'operations': operations})
 
 
@@ -511,6 +678,8 @@ def operation_history(request):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def move_product(request):
+    org = get_user_organization(request.user)
+
     if request.method == 'POST':
         product_id = request.POST.get('product')
         target_location_id = request.POST.get('target_location')
@@ -522,9 +691,9 @@ def move_product(request):
         if quantity is None:
             return render(request, 'inventory/error.html', {'message': 'Podaj poprawną ilość (> 0).'})
 
-        product = Product.objects.get(id=product_id)
+        product = get_object_or_404(Product, id=product_id, organization=org)
         source_location = product.location
-        target_location = Location.objects.get(id=target_location_id)
+        target_location = get_object_or_404(Location, id=target_location_id, organization=org)
 
         if source_location and target_location and source_location.id == target_location.id:
             return render(request, 'inventory/error.html', {
@@ -552,6 +721,7 @@ def move_product(request):
             category=product.category,
             volume=product.volume,
             location=target_location,
+            organization=org,
             defaults={'quantity': 0}
         )
         target_product.quantity += quantity
@@ -561,12 +731,14 @@ def move_product(request):
         StockOperation.objects.create(
             product=product,
             location=source_location,
+            organization=org,
             operation_type='OUT',
             quantity=quantity
         )
         StockOperation.objects.create(
             product=target_product,
             location=target_location,
+            organization=org,
             operation_type='IN',
             quantity=quantity
         )
@@ -576,17 +748,16 @@ def move_product(request):
     products = (
         Product.objects
         .select_related('location')
-        .filter(quantity__gt=0)
+        .filter(quantity__gt=0, organization=org)
         .order_by('name', 'location__name')
     )
 
-    locations = Location.objects.all()
+    locations = Location.objects.filter(organization=org).order_by('name')
 
     return render(request, 'inventory/move_product.html', {
         'products': products,
         'locations': locations
     })
-
 
 # ==========================
 # SMART IN (OWNER/WORKER)
@@ -595,33 +766,84 @@ def move_product(request):
 @login_required
 @role_required(['OWNER', 'WORKER'])
 def add_operation_with_suggestion(request):
+    org = get_user_organization(request.user)
+
+    def get_best_location(product_ref, quantity):
+        required_volume = product_ref.volume * quantity
+        all_locations = Location.objects.filter(organization=org)
+
+        matching_category_locations = []
+        other_locations = []
+
+        for loc in all_locations:
+            free_capacity = loc.free_capacity()
+            if free_capacity < required_volume:
+                continue
+
+            has_same_category = Product.objects.filter(
+                location=loc,
+                category=product_ref.category,
+                quantity__gt=0,
+                organization=org
+            ).exists()
+
+            location_data = {
+                'location': loc,
+                'free_capacity': free_capacity,
+            }
+
+            if has_same_category:
+                matching_category_locations.append(location_data)
+            else:
+                other_locations.append(location_data)
+
+        matching_category_locations.sort(key=lambda x: x['free_capacity'], reverse=True)
+        other_locations.sort(key=lambda x: x['free_capacity'], reverse=True)
+
+        if matching_category_locations:
+            return matching_category_locations[0]['location']
+
+        if other_locations:
+            return other_locations[0]['location']
+
+        return None
+
     if request.method == 'POST':
         product_name = request.POST.get('product_name', '').strip()
         quantity = _parse_positive_int(request.POST.get('quantity'))
         location_id = request.POST.get('location_id')
 
-        if not product_name or not location_id:
-            return render(request, 'inventory/error.html', {'message': 'Uzupełnij wymagane pola.'})
+        if not product_name:
+            return render(request, 'inventory/error.html', {'message': 'Wybierz produkt.'})
 
         if quantity is None:
             return render(request, 'inventory/error.html', {'message': 'Podaj poprawną ilość (> 0).'})
 
-        location = Location.objects.get(id=location_id)
-
         product_ref = (
             Product.objects
-            .filter(name=product_name)
+            .filter(name=product_name, organization=org)
             .order_by('-quantity')
             .first()
         )
 
         if not product_ref:
-            return render(request, 'inventory/error.html', {'message': 'Nie znaleziono produktu'})
+            return render(request, 'inventory/error.html', {'message': 'Nie znaleziono produktu.'})
+
+        # jeśli użytkownik nie wybierze lokalizacji albo wybierze pustą -> użyj sugestii
+        if location_id:
+            location = get_object_or_404(Location, id=location_id, organization=org)
+        else:
+            location = get_best_location(product_ref, quantity)
+
+        if not location:
+            return render(request, 'inventory/error.html', {
+                'message': 'Brak lokalizacji z wystarczającą wolną pojemnością dla tego produktu.'
+            })
 
         required_volume = product_ref.volume * quantity
         if location.free_capacity() < required_volume:
             return render(request, 'inventory/error.html', {
-                'message': 'Wybrana lokalizacja nie ma wystarczającej pojemności'
+                'message': 'Wybrana lokalizacja nie ma wystarczającej pojemności.'
             })
 
         target_product, created = Product.objects.get_or_create(
@@ -629,6 +851,7 @@ def add_operation_with_suggestion(request):
             category=product_ref.category,
             volume=product_ref.volume,
             location=location,
+            organization=org,
             defaults={'quantity': 0}
         )
 
@@ -638,26 +861,52 @@ def add_operation_with_suggestion(request):
         StockOperation.objects.create(
             product=target_product,
             location=location,
+            organization=org,
             operation_type='IN',
             quantity=quantity
         )
 
+        messages.success(
+            request,
+            f'Przyjęto {quantity} szt. produktu "{target_product.name}" do lokalizacji "{location.name}".'
+        )
         return redirect('product_list')
 
-    products = (
+    raw_products = (
         Product.objects
-        .values('name')
+        .filter(organization=org)
+        .values('name', 'category')
         .annotate(total_quantity=Sum('quantity'))
-        .order_by('name')
+        .order_by('category', 'name')
     )
 
-    locations = Location.objects.all()
+    products_with_suggestions = []
+    for item in raw_products:
+        product_ref = (
+            Product.objects
+            .filter(name=item['name'], organization=org)
+            .order_by('-quantity')
+            .first()
+        )
+
+        suggested_location = None
+        if product_ref:
+            suggested_location = get_best_location(product_ref, 1)
+
+        products_with_suggestions.append({
+            'name': item['name'],
+            'category': item['category'],
+            'total_quantity': item['total_quantity'],
+            'suggested_location_id': suggested_location.id if suggested_location else '',
+            'suggested_location_name': suggested_location.name if suggested_location else 'Brak sugestii',
+        })
+
+    locations = Location.objects.filter(organization=org).order_by('name')
 
     return render(request, 'inventory/add_operation_smart.html', {
-        'products': products,
+        'products': products_with_suggestions,
         'locations': locations
     })
-
 
 # ==========================
 # DASHBOARD (ALL ROLES)
@@ -666,14 +915,16 @@ def add_operation_with_suggestion(request):
 @login_required
 @role_required(['OWNER', 'WORKER', 'VIEWER'])
 def dashboard(request):
-    locations = Location.objects.all()
+    org = get_user_organization(request.user)
+
+    locations = Location.objects.filter(organization=org).order_by('name')
     dashboard_data = []
 
     total_capacity = 0
     total_used = 0
 
     for loc in locations:
-        products = Product.objects.filter(location=loc, quantity__gt=0)
+        products = Product.objects.filter(location=loc, quantity__gt=0, organization=org)
 
         products_map = {}
         used_volume = 0
@@ -729,7 +980,6 @@ def dashboard(request):
         'total_usage_percent': round(total_usage_percent, 2)
     })
 
-
 # ==========================
 # REPORTS (OWNER)
 # ==========================
@@ -743,12 +993,13 @@ def reports_view(request):
 @login_required
 @role_required(['OWNER'])
 def report_stock_csv(request):
+    org = get_user_organization(request.user)
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="stan_magazynu.csv"'
     response.write('\ufeff')
-
+    
     writer = csv.writer(response, delimiter=';', quoting=csv.QUOTE_ALL)
-
+    
     writer.writerow([
         'Produkt',
         'Lokalizacja',
@@ -759,7 +1010,7 @@ def report_stock_csv(request):
 
     products = (
         Product.objects
-        .filter(quantity__gt=0)
+        .filter(quantity__gt=0, organization=org)
         .select_related('location')
     )
 
@@ -804,6 +1055,8 @@ def report_stock_csv(request):
 @login_required
 @role_required(['OWNER'])
 def report_operations_csv(request):
+    org = get_user_organization(request.user)
+
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="historia_operacji.csv"'
     response.write('\ufeff')
@@ -821,7 +1074,7 @@ def report_operations_csv(request):
     operations = (
         StockOperation.objects
         .select_related('product', 'location')
-        .filter(quantity__gt=0)
+        .filter(quantity__gt=0, organization=org)
         .order_by('-timestamp', '-id')
     )
 
@@ -840,7 +1093,6 @@ def report_operations_csv(request):
         ])
 
     return response
-
 
 # ==========================
 # PDF FONT HELPER (Windows)
@@ -866,6 +1118,8 @@ def _register_windows_font():
 @login_required
 @role_required(['OWNER'])
 def report_stock_pdf(request):
+    org = get_user_organization(request.user)
+
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="stan_magazynu.pdf"'
 
@@ -891,7 +1145,7 @@ def report_stock_pdf(request):
 
     products = (
         Product.objects
-        .filter(quantity__gt=0)
+        .filter(quantity__gt=0, organization=org)
         .select_related('location')
         .order_by('name', 'location__name')
     )
@@ -924,6 +1178,8 @@ def report_stock_pdf(request):
 @login_required
 @role_required(['OWNER'])
 def report_operations_pdf(request):
+    org = get_user_organization(request.user)
+
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="historia_operacji.pdf"'
 
@@ -949,6 +1205,7 @@ def report_operations_pdf(request):
 
     operations = (
         StockOperation.objects
+        .filter(organization=org)
         .select_related('product', 'location')
         .order_by('-timestamp')
     )
@@ -977,10 +1234,11 @@ def report_operations_pdf(request):
     c.save()
     return response
 
-
 @login_required
 @role_required(['OWNER'])
 def report_locations_pdf(request):
+    org = get_user_organization(request.user)
+
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="stan_magazynow.pdf"'
 
@@ -1004,10 +1262,10 @@ def report_locations_pdf(request):
     c.line(40, y, width - 40, y)
     y -= 15
 
-    locations = Location.objects.all().order_by('name')
+    locations = Location.objects.filter(organization=org).order_by('name')
 
     for loc in locations:
-        products = Product.objects.filter(location=loc, quantity__gt=0)
+        products = Product.objects.filter(location=loc, quantity__gt=0, organization=org)
         used = sum(p.volume * p.quantity for p in products)
         free = loc.capacity - used
         percent = (used / loc.capacity) * 100 if loc.capacity > 0 else 0

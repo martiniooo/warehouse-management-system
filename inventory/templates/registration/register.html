@@ -25,12 +25,12 @@
     h1{margin:0 0 10px 0}
     p{margin:0 0 18px 0; color:var(--muted); font-size:13px}
     label{display:block; font-weight:600; margin-top:14px; font-size:14px}
-    input, select{
+    input{
       width:100%; padding:10px 12px; margin-top:6px;
       border-radius:10px; border:1px solid #ccc; font-size:14px;
       font-family: inherit;
     }
-    input:focus, select:focus{outline:none; border-color:var(--accent)}
+    input:focus{outline:none; border-color:var(--accent)}
     button{
       width:100%; margin-top:18px; padding:12px; border:none;
       border-radius:12px; background:var(--accent); color:#fff;
@@ -63,6 +63,25 @@
       text-decoration: none;
     }
     .footer a:hover{ text-decoration: underline; }
+    .toggle-password{
+      margin-top:8px;
+      background:none;
+      border:none;
+      color:var(--accent);
+      font-weight:700;
+      cursor:pointer;
+      padding:0;
+      font-size:13px;
+      width:auto;
+    }
+    .disabled-box{
+      margin-top: 12px;
+      padding: 14px;
+      background: #fff3cd;
+      color: #856404;
+      border-radius: 12px;
+      font-size: 14px;
+    }
   </style>
 </head>
 
@@ -73,42 +92,56 @@
     {% if is_first_user %}
       <p>Pierwszy użytkownik zostanie utworzony jako <b>Właściciel</b>.</p>
     {% else %}
-      <p>Utwórz konto i wybierz rolę (bez opcji właściciela).</p>
+      <p>Rejestracja publiczna została wyłączona.</p>
     {% endif %}
 
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
 
-    <form method="post">
+    {% if registration_closed %}
+      <div class="disabled-box">
+        Nowe konta pracowników i użytkowników z podglądem są tworzone przez właściciela systemu z poziomu aplikacji.
+      </div>
+    {% else %}
+      <form method="post">
       {% csrf_token %}
 
-      <label>Nazwa użytkownika</label>
-      <input type="text" name="username" autocomplete="username" required>
+        <label>Nazwa użytkownika</label>
+        <input type="text" name="username" autocomplete="username" required>
 
-      <label>Hasło</label>
-      <input type="password" name="password" autocomplete="new-password" required>
+        <label>Nazwa organizacji / firmy</label>
+        <input type="text" name="organization_name" required>
 
-      <label>Powtórz hasło</label>
-      <input type="password" name="password2" autocomplete="new-password" required>
+        <label>Hasło</label>
+        <input type="password" name="password" id="password" autocomplete="new-password" required>
+        <button type="button" class="toggle-password" onclick="togglePassword('password', this)">Pokaż hasło</button>
 
-      {% if not is_first_user %}
-        <label>Rola</label>
-        <select name="role" required>
-          <option value="WORKER">Magazynier</option>
-          <option value="VIEWER">Tylko podgląd</option>
-        </select>
-        <div class="hint">
-          Właściciel ma pełny dostęp i jest nadawany automatycznie tylko pierwszemu użytkownikowi.
-        </div>
+        <label>Powtórz hasło</label>
+        <input type="password" name="password2" id="password2" autocomplete="new-password" required>
+        <button type="button" class="toggle-password" onclick="togglePassword('password2', this)">Pokaż hasło</button>
+
+        <button type="submit">Utwórz konto</button>
+      </form>
       {% endif %}
-
-      <button type="submit">Utwórz konto</button>
-    </form>
 
     <div class="footer">
       Masz już konto? <a href="{% url 'login' %}">Zaloguj się</a>
     </div>
   </div>
+
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Ukryj hasło';
+    } else {
+        input.type = 'password';
+        btn.textContent = 'Pokaż hasło';
+    }
+}
+</script>
+
 </body>
 </html>

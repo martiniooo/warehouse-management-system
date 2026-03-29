@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj użytkownika</title>
+    <style>
+        :root{
+            --bg: linear-gradient(135deg, #eef2f7, #f8f9fb);
+            --card:#fff;
+            --text:#2e2e2e;
+            --muted:#6c757d;
+            --accent:#0d6efd;
+            --accent2:#0b5ed7;
+            --border:#e5e7eb;
+            --error-bg:#f8d7da;
+            --success-bg:#d1e7dd;
+            --success-text:#0f5132;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            padding:30px;
+            font-family:"Segoe UI", Arial, sans-serif;
+            background:var(--bg);
+            color:var(--text);
+        }
+        .container{
+            max-width:700px;
+            margin:auto;
+        }
+        .card{
+            background:var(--card);
+            border-radius:18px;
+            padding:28px;
+            box-shadow:0 12px 30px rgba(0,0,0,0.08);
+            border:1px solid rgba(0,0,0,0.03);
+        }
+        h1{margin:0 0 10px 0}
+        p{margin:0 0 18px 0; color:var(--muted); font-size:14px}
+        label{display:block; font-weight:600; margin-top:14px; font-size:14px}
+        input, select{
+            width:100%;
+            padding:12px;
+            margin-top:6px;
+            border-radius:10px;
+            border:1px solid #ccc;
+            font-size:14px;
+            font-family:inherit;
+        }
+        input:focus, select:focus{
+            outline:none;
+            border-color:var(--accent);
+        }
+        .error{
+            background:var(--error-bg);
+            padding:10px 12px;
+            border-radius:12px;
+            margin-top:10px;
+            color:#842029;
+            font-size:14px;
+        }
+        .messages{
+            margin-bottom:14px;
+        }
+        .msg-success{
+            background:var(--success-bg);
+            color:var(--success-text);
+            padding:10px 12px;
+            border-radius:12px;
+            font-size:14px;
+            margin-bottom:10px;
+        }
+        .password-wrap{
+            position:relative;
+        }
+        .toggle-password{
+            margin-top:8px;
+            background:none;
+            border:none;
+            color:var(--accent);
+            font-weight:700;
+            cursor:pointer;
+            padding:0;
+            font-size:13px;
+        }
+        .submit-btn{
+            width:100%;
+            margin-top:20px;
+            padding:12px;
+            border:none;
+            border-radius:12px;
+            background:var(--accent);
+            color:#fff;
+            font-weight:700;
+            cursor:pointer;
+            font-size:15px;
+        }
+        .submit-btn:hover{
+            background:var(--accent2);
+        }
+    </style>
+</head>
+<body>
+
+{% include 'inventory/back_home.html' %}
+
+<div class="container">
+    <div class="card">
+        <h1>👤 Dodaj użytkownika</h1>
+        <p>Właściciel może utworzyć konto pracownika lub użytkownika z podglądem.</p>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="msg-success">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <label>Nazwa użytkownika</label>
+            <input type="text" name="username" autocomplete="username" required>
+
+            <label>Hasło</label>
+            <div class="password-wrap">
+                <input type="password" name="password" id="password" autocomplete="new-password" required>
+                <button type="button" class="toggle-password" onclick="togglePassword('password', this)">Pokaż hasło</button>
+            </div>
+
+            <label>Powtórz hasło</label>
+            <div class="password-wrap">
+                <input type="password" name="password2" id="password2" autocomplete="new-password" required>
+                <button type="button" class="toggle-password" onclick="togglePassword('password2', this)">Pokaż hasło</button>
+            </div>
+
+            <label>Rola</label>
+            <select name="role" required>
+                <option value="WORKER">Magazynier</option>
+                <option value="VIEWER">Tylko podgląd</option>
+            </select>
+
+            <button type="submit" class="submit-btn">Utwórz konto</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Ukryj hasło';
+    } else {
+        input.type = 'password';
+        btn.textContent = 'Pokaż hasło';
+    }
+}
+</script>
+
+</body>
+</html>

@@ -430,6 +430,15 @@
             <p>Podgląd i edycja zgłoszonych błędów oraz sugestii</p>
         </a>
 
+        {% if role == 'OWNER' %}
+        <a href="{% url 'add_staff_user' %}" class="card">
+            <div class="tag">Dostęp: OWNER</div>
+            <div class="icon">👤</div>
+            <h3>Dodaj użytkownika</h3>
+            <p>Tworzenie kont magazynierów oraz użytkowników z dostępem tylko do podglądu.</p>
+        </a>
+{% endif %}
+
         <!-- 9) Administracja - OWNER -->
         <a href="/admin/"
            class="card {% if role != 'OWNER' %}locked{% endif %}">
