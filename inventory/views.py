@@ -172,6 +172,11 @@ def add_staff_user(request):
 def home(request):
     org = get_user_organization(request.user)
 
+    if not org:
+        return render(request, 'inventory/error.html', {
+            'message': 'Brak przypisanej organizacji.'
+        })
+
     if request.method == 'POST':
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
@@ -188,12 +193,9 @@ def home(request):
             messages.success(request, 'Zgłoszenie zostało zapisane. Dziękujemy!')
             return redirect('home')
 
-    role = getattr(getattr(request.user, 'userprofile', None), 'role', 'VIEWER')
-    if request.user.is_superuser:
-        role = 'OWNER'
-
     return render(request, 'inventory/home.html', {
-        'role': get_user_role(request.user)
+        'role': get_user_role(request.user),
+        'organization_name': org.name,
     })
 
 
