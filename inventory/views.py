@@ -596,6 +596,7 @@ def add_operation(request):
                 product=target_product,
                 location=location,
                 organization=org,
+                performed_by=request.user,
                 operation_type='IN',
                 quantity=quantity
             )
@@ -631,6 +632,7 @@ def add_operation(request):
                     product=b,
                     location=b.location,
                     organization=org,
+                    performed_by=request.user,
                     operation_type='OUT',
                     quantity=take
                 )
@@ -667,7 +669,7 @@ def operation_history(request):
     operations = (
         StockOperation.objects
         .filter(organization=org)
-        .select_related('product', 'location')
+        .select_related('product', 'location', 'performed_by')
         .order_by('-timestamp')
     )
     return render(request, 'inventory/operation_history.html', {'operations': operations})
@@ -734,6 +736,7 @@ def move_product(request):
             product=product,
             location=source_location,
             organization=org,
+            performed_by=request.user,
             operation_type='OUT',
             quantity=quantity
         )
@@ -741,6 +744,7 @@ def move_product(request):
             product=target_product,
             location=target_location,
             organization=org,
+            performed_by=request.user,
             operation_type='IN',
             quantity=quantity
         )
@@ -831,7 +835,6 @@ def add_operation_with_suggestion(request):
         if not product_ref:
             return render(request, 'inventory/error.html', {'message': 'Nie znaleziono produktu.'})
 
-        # jeśli użytkownik nie wybierze lokalizacji albo wybierze pustą -> użyj sugestii
         if location_id:
             location = get_object_or_404(Location, id=location_id, organization=org)
         else:
@@ -864,6 +867,7 @@ def add_operation_with_suggestion(request):
             product=target_product,
             location=location,
             organization=org,
+            performed_by=request.user,
             operation_type='IN',
             quantity=quantity
         )
@@ -966,9 +970,9 @@ def dashboard(request):
             'free': round(free_volume, 2),
             'usage_percent': round(usage_percent, 2),
             'status': (
-                'pełna' if usage_percent >= 90 else
-                'średnia' if usage_percent >= 50 else
-                'pusta'
+                'pusta' if used_volume == 0 else
+                'pełna' if usage_percent >= 100 else
+                'w porządku'
             ),
             'products': products_details
         })

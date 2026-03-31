@@ -74,6 +74,15 @@ class StockOperation(models.Model):
     )
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     location = models.ForeignKey(Location, on_delete=models.CASCADE)
+
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Wykonał"
+    )
+
     operation_type = models.CharField(max_length=4, choices=OPERATION_TYPES)
     quantity = models.PositiveIntegerField()
     timestamp = models.DateTimeField(auto_now_add=True)

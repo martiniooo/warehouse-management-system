@@ -95,41 +95,49 @@
 
     <h1>🕒 Historia operacji magazynowych</h1>
 
-    <div class="card">
+<div class="card">
 
-        <table>
-            <tr>
-                <th>Data</th>
-                <th>Produkt</th>
-                <th>Typ operacji</th>
-                <th>Ilość</th>
-                <th>Lokalizacja</th>
-            </tr>
+    <table>
+        <tr>
+            <th>Data</th>
+            <th>Produkt</th>
+            <th>Typ operacji</th>
+            <th>Ilość</th>
+            <th>Lokalizacja</th>
+            <th>Wykonał</th>
+        </tr>
 
-            {% for op in operations %}
-            <tr>
-                <td class="muted">{{ op.timestamp|date:"Y-m-d H:i" }}</td>
-                <td>{{ op.product.name }}</td>
-                <td>
-                    {% if op.operation_type == 'IN' %}
-                        <span class="badge badge-in">Przyjęcie</span>
-                    {% elif op.operation_type == 'OUT' %}
-                        <span class="badge badge-out">Wydanie</span>
-                    {% else %}
-                        <span class="badge badge-move">Przesunięcie</span>
-                    {% endif %}
-                </td>
-                <td>{{ op.quantity }}</td>
-                <td>{{ op.location }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">Brak operacji</td>
-            </tr>
-            {% endfor %}
-        </table>
+        {% for op in operations %}
+        <tr>
+            <td class="muted">{{ op.timestamp|date:"Y-m-d H:i" }}</td>
+            <td>{{ op.product.name }}</td>
+            <td>
+                {% if op.operation_type == 'IN' %}
+                    <span class="badge badge-in">Przyjęcie</span>
+                {% elif op.operation_type == 'OUT' %}
+                    <span class="badge badge-out">Wydanie</span>
+                {% else %}
+                    <span class="badge badge-move">Przesunięcie</span>
+                {% endif %}
+            </td>
+            <td>{{ op.quantity }}</td>
+            <td>{{ op.location }}</td>
+            <td>
+                {% if op.performed_by %}
+                    {{ op.performed_by.username }}
+                {% else %}
+                    <span class="muted">Brak danych</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Brak operacji</td>
+        </tr>
+        {% endfor %}
+    </table>
 
-    </div>
+</div>
 
 </div>
 

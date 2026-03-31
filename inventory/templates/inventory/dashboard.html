@@ -84,7 +84,7 @@
         }
 
         .status-pusta .badge { background-color: var(--success); }
-        .status-srednia .badge { background-color: var(--warning); color: #000; }
+        .status-ok .badge { background-color: var(--warning); color: #000; }
         .status-pelna .badge { background-color: var(--danger); }
 
         .meta {
@@ -150,7 +150,7 @@
     {% for item in dashboard_data %}
         <div class="card
             {% if item.status == 'pełna' %}status-pelna
-            {% elif item.status == 'średnia' %}status-srednia
+            {% elif item.status == 'w porządku' %}status-ok
             {% else %}status-pusta{% endif %}">
 
             <div class="location-header">
