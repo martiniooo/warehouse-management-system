@@ -34,11 +34,9 @@
         }
 
         .container {
-            max-width: 1400px; /* było 1100px */
+            max-width: 1400px;
             margin: auto;
         }
-
-        /* ===== TOP BAR ===== */
 
         .topbar {
             display: flex;
@@ -106,8 +104,6 @@
         .btn-danger { background: var(--danger); color: #fff; }
         .btn-danger:hover { background: var(--danger-hover); }
 
-        /* ===== MESSAGES ===== */
-
         .msg {
             padding: 10px 12px;
             border-radius: 12px;
@@ -121,8 +117,6 @@
         .msg-success { border-left: 6px solid #198754; }
         .msg-error { border-left: 6px solid #dc3545; }
 
-        /* ===== GRID ===== */
-        /* ✅ pełna szerokość + responsywne kolumny */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -144,8 +138,6 @@
             transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
         
-
-
         .card:hover {
             transform: translateY(-4px);
             box-shadow: 0 15px 35px rgba(0,0,0,0.10);
@@ -181,7 +173,6 @@
             font-weight: 700;
         }
 
-        /* ===== LOCKED (brak uprawnień) ===== */
         .locked {
             opacity: 0.60;
             pointer-events: none;
@@ -194,7 +185,6 @@
             color: #856404;
         }
 
-        /* ===== BUG WIDGET (floating) ===== */
         .bug-fab {
             position: fixed;
             right: 22px;
@@ -286,7 +276,6 @@
             justify-content: flex-end;
         }
 
-        /* mobile polish */
         @media (max-width: 520px) {
             body { padding: 18px; }
             .topbar { flex-direction: column; align-items: stretch; }
@@ -319,7 +308,6 @@
                 <span>Organizacja: {{ organization_name }}</span>
             </div>
 
-            <!-- LOGOUT (POST) -->
             <form method="post" action="{% url 'logout' %}" style="margin:0;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger">Wyloguj</button>
@@ -327,7 +315,6 @@
         </div>
     </div>
 
-    <!-- komunikaty -->
     {% if messages %}
         {% for message in messages %}
             <div class="msg {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
@@ -345,7 +332,6 @@
              <p>Zarządzanie lokalizacjami, pojemnością oraz dostępnością przestrzeni.</p>
         </a>
 
-        <!-- 1) Produkty - ALL -->
         <a href="/products/" class="card">
             <div class="tag">Dostęp: wszyscy</div>
             <div class="icon">📋</div>
@@ -353,7 +339,6 @@
             <p>Lista produktów i ich stan magazynowy</p>
         </a>
 
-        <!-- 2) Dodaj produkt - OWNER/WORKER -->
         <a href="/products/add/"
            class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
             <div class="tag">
@@ -364,7 +349,6 @@
             <p>Dodaj nowy produkt z objętością i magazynem</p>
         </a>
 
-        <!-- 3) Operacje magazynowe - OWNER/WORKER -->
         <a href="/operation/add/"
            class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
             <div class="tag">
@@ -375,7 +359,6 @@
             <p>Przyjęcia i wydania produktów (IN/OUT)</p>
         </a>
 
-        <!-- 4) Przesunięcia - OWNER/WORKER -->
         <a href="/operation/move/"
            class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
             <div class="tag">
@@ -386,7 +369,6 @@
             <p>Zmiana lokalizacji produktów (MOVE)</p>
         </a>
 
-        <!-- 5) Przyjęcie z optymalizacją - OWNER/WORKER -->
         <a href="/operation/add-smart/"
            class="card {% if role != 'OWNER' and role != 'WORKER' %}locked{% endif %}">
             <div class="tag">
@@ -397,7 +379,6 @@
             <p>Dobór lokalizacji na podstawie wolnej pojemności</p>
         </a>
 
-        <!-- 6) Historia operacji - ALL -->
         <a href="/operations/" class="card">
             <div class="tag">Dostęp: wszyscy</div>
             <div class="icon">🕒</div>
@@ -405,7 +386,6 @@
             <p>Rejestr wszystkich operacji magazynowych</p>
         </a>
 
-        <!-- 7) Dashboard - ALL -->
         <a href="/dashboard/" class="card">
             <div class="tag">Dostęp: wszyscy</div>
             <div class="icon">📊</div>
@@ -413,7 +393,6 @@
             <p>Podgląd wykorzystania magazynów i produktów</p>
         </a>
 
-        <!-- 8) Raporty - OWNER -->
         <a href="/reports/"
            class="card {% if role != 'OWNER' %}locked{% endif %}">
             <div class="tag">
@@ -440,7 +419,6 @@
         </a>
 {% endif %}
 
-        <!-- 9) Administracja - OWNER -->
         <a href="/admin/"
            class="card {% if role != 'OWNER' %}locked{% endif %}">
             <div class="tag">
@@ -455,7 +433,6 @@
 
 </div>
 
-<!-- BUG WIDGET (floating) -->
 <button class="bug-fab" type="button" id="bugFab" aria-label="Zgłoś błąd">🐞</button>
 
 <div class="bug-panel" id="bugPanel" role="dialog" aria-modal="true" aria-labelledby="bugTitle">
@@ -490,7 +467,6 @@
 
     function openPanel() {
         panel.classList.add('open');
-        // focus na pierwsze pole
         const first = panel.querySelector('input, textarea, button');
         if (first) first.focus();
     }
@@ -507,14 +483,12 @@
 
     closeBtn.addEventListener('click', closePanel);
 
-    // zamknięcie po kliknięciu poza panelem
     document.addEventListener('click', (e) => {
         if (!panel.classList.contains('open')) return;
         if (panel.contains(e.target) || e.target === fab) return;
         closePanel();
     });
 
-    // ESC zamyka panel
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
     });

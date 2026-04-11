@@ -163,7 +163,6 @@
     function updateUI() {
         const type = typeSelect.value;
 
-        // IN -> pokaż wybór magazynu, OUT -> ukryj
         if (type === 'IN') {
             locationGroup.classList.remove('hidden');
             outInfo.classList.add('hidden');
@@ -191,7 +190,6 @@
     productSelect.addEventListener('change', updateAfterOut);
     qtyInput.addEventListener('input', updateAfterOut);
 
-    // init
     updateUI();
 </script>
 

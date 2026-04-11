@@ -18,7 +18,6 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
-
 # ==========================
 # HELPERS
 # ==========================
@@ -31,7 +30,6 @@ def _parse_positive_int(value, default=None):
     except (ValueError, TypeError):
         return default
 
-
 # ==========================
 # ROLE ACCESS CONTROL
 # ==========================
@@ -43,9 +41,8 @@ def get_user_role(user):
     if user.is_superuser:
         return 'OWNER'
 
-    # Bez side-effectów (nie tworzymy profilu w trakcie requestu)
     if not hasattr(user, 'userprofile'):
-        return 'WORKER'  # albo 'VIEWER' jeśli wolisz ostrożniej
+        return 'WORKER'  
 
     return user.userprofile.role
 
@@ -68,7 +65,6 @@ def role_required(allowed_roles):
             return view_func(request, *args, **kwargs)
         return _wrapped
     return decorator
-
 
 # ==========================
 # AUTH: REGISTER
@@ -161,7 +157,6 @@ def add_staff_user(request):
         return redirect('home')
 
     return render(request, 'inventory/add_staff_user.html')
-
 
 # ==========================
 # HOME (bugs) - ALL ROLES
@@ -421,7 +416,6 @@ def delete_location(request, location_id):
         'location': location
     })
 
-
 # ==========================
 # PRODUCTS - LIST (ALL ROLES)
 # ==========================
@@ -481,7 +475,6 @@ def delete_product(request, product_name):
         'product_name': product_name
     })
 
-
 # ==========================
 # PRODUCTS - ADD (OWNER/WORKER)
 # ==========================
@@ -540,6 +533,7 @@ def add_product(request):
 
     locations = Location.objects.filter(organization=org).order_by('name')
     return render(request, 'inventory/add_product.html', {'locations': locations})
+
 # ==========================
 # OPERATIONS ADD (OWNER/WORKER)
 # ==========================
@@ -674,7 +668,6 @@ def operation_history(request):
     )
     return render(request, 'inventory/operation_history.html', {'operations': operations})
 
-
 # ==========================
 # MOVE (OWNER/WORKER) - AUDYT: OUT + IN
 # ==========================
@@ -715,11 +708,9 @@ def move_product(request):
                 'message': 'Brak miejsca w lokalizacji docelowej'
             })
 
-        # 1) zdejmujemy ze źródła
         product.quantity -= quantity
         product.save()
 
-        # 2) dodajemy do celu
         target_product, created = Product.objects.get_or_create(
             name=product.name,
             category=product.category,
@@ -731,7 +722,6 @@ def move_product(request):
         target_product.quantity += quantity
         target_product.save()
 
-        # 3) AUDYT: zapisujemy OUT ze źródła + IN do celu
         StockOperation.objects.create(
             product=product,
             location=source_location,
@@ -1115,7 +1105,6 @@ def _register_windows_font():
             pass
 
     return "Helvetica"
-
 
 # ==========================
 # PDF REPORTS (OWNER)
