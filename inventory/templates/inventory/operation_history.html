@@ -7,7 +7,6 @@
 
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
             --card-bg: #ffffff;
             --text: #2e2e2e;
             --muted: #6c757d;
@@ -26,7 +25,10 @@
             padding: 30px;
             font-family: "Segoe UI", Arial, sans-serif;
             background-image: url("{% static 'images/logoo.png' %}");
-            background: var(--bg-gradient);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+
             color: var(--text);
         }
 
