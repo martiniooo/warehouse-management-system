@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -6,7 +7,6 @@
 
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #eef2f7, #f8f9fb);
             --card-bg: rgba(255,255,255,0.96);
             --text: #2e2e2e;
             --muted: #6c757d;
@@ -23,7 +23,11 @@
             margin: 0;
             padding: 30px;
             font-family: "Segoe UI", Arial, sans-serif;
-            background: var(--bg-gradient);
+            background-image: url("{% static 'images/logoo.png' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+
             color: var(--text);
         }
 

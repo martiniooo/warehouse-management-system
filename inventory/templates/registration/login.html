@@ -1,21 +1,36 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
   <title>Logowanie</title>
+
   <style>
     :root{
-      --bg: linear-gradient(135deg, #eef2f7, #f8f9fb);
-      --card:#fff; --text:#2e2e2e; --muted:#6c757d;
-      --accent:#0d6efd; --accent2:#0b5ed7;
+      --card:#fff; 
+      --text:#2e2e2e; 
+      --muted:#6c757d;
+      --accent:#0d6efd; 
+      --accent2:#0b5ed7;
       --border:#e5e7eb;
       --error-bg:#f8d7da;
     }
+
     *{box-sizing:border-box}
+
     body{
-      margin:0; padding:30px; font-family:"Segoe UI", Arial, sans-serif;
-      background:var(--bg); color:var(--text);
-      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      margin:0; 
+      padding:30px; 
+      font-family:"Segoe UI", Arial, sans-serif;
+      background-image: url("{% static 'images/logoo.png' %}");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color:var(--text);
+      min-height:100vh; 
+      display:flex; 
+      align-items:center; 
+      justify-content:center;
     }
     .card{
       width:420px; background:var(--card); border-radius:18px; padding:26px;

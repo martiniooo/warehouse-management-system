@@ -1,11 +1,12 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>Dodaj użytkownika</title>
+
     <style>
         :root{
-            --bg: linear-gradient(135deg, #eef2f7, #f8f9fb);
             --card:#fff;
             --text:#2e2e2e;
             --muted:#6c757d;
@@ -16,12 +17,18 @@
             --success-bg:#d1e7dd;
             --success-text:#0f5132;
         }
+
         *{box-sizing:border-box}
+
         body{
             margin:0;
             padding:30px;
             font-family:"Segoe UI", Arial, sans-serif;
-            background:var(--bg);
+            background-image: url("{% static 'images/logoo.png' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+
             color:var(--text);
         }
         .container{
